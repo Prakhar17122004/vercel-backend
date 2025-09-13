@@ -5,6 +5,7 @@
   "description": "",
   "main": "server.js",
   "scripts": {
+    "start": "node server.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -18,7 +19,6 @@
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.18.0",
     "natural": "^8.1.0",
-    "openai": "^5.20.0",
-    "start":"node server.js"
+    "openai": "^5.20.0"
   }
 }
