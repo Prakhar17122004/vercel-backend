@@ -14,67 +14,72 @@ const app = express();
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ limit: "10mb", extended: true }));
 app.use(cors({
-  origin: process.env.NODE_ENV === 'production' ? 
-    ['https://your-frontend-domain.com'] : // Replace with your actual frontend URL
-    ['http://localhost:3000', 'http://localhost:5173'] // Common local dev ports
+  origin: [
+    "http://localhost:3000",
+    "http://localhost:5173", 
+    "https://your-frontend-domain.vercel.app", // Replace with your actual frontend URL
+  ],
+  credentials: true
 }));
 
 // Routes
 app.get("/", (req, res) => {
-  res.json({ 
-    message: "Backend is working 🚀",
-    timestamp: new Date().toISOString(),
-    environment: process.env.NODE_ENV || 'development'
-  });
+  res.json({ message: "Backend is working 🚀" });
 });
 
-app.use("/api/auth", authRoutes);
-app.use("/api/notes", noteRoutes);
+// MongoDB connection for serverless
+let isConnected = false;
 
-// Error handling middleware
-app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).json({ error: 'Something went wrong!' });
-});
-
-// 404 handler
-app.use((req, res) => {
-  res.status(404).json({ error: 'Route not found' });
-});
-
-// MongoDB connection
-let cachedConnection = null;
-
-async function connectToDatabase() {
-  if (cachedConnection) {
-    return cachedConnection;
+const connectDB = async () => {
+  if (isConnected) {
+    return;
   }
 
   try {
-    const connection = await mongoose.connect(process.env.MONGO_URI, {
+    await mongoose.connect(process.env.MONGO_URI, {
       useNewUrlParser: true,
       useUnifiedTopology: true,
+      bufferCommands: false, // Disable mongoose buffering for serverless
+      maxPoolSize: 1, // Maintain up to 1 socket connection for serverless
     });
     
-    cachedConnection = connection;
+    isConnected = true;
     console.log("✅ MongoDB connected");
-    return connection;
   } catch (error) {
     console.error("❌ MongoDB connection error:", error);
     throw error;
   }
-}
+};
 
-// Initialize database connection
-connectToDatabase().catch(console.error);
+// Middleware to ensure DB connection on each request
+app.use(async (req, res, next) => {
+  try {
+    await connectDB();
+    next();
+  } catch (error) {
+    console.error("DB connection failed:", error);
+    res.status(500).json({ error: "Database connection failed" });
+  }
+});
 
-// Only start server locally (not on Vercel)
+// API Routes (after DB middleware)
+app.use("/api/auth", authRoutes);
+app.use("/api/notes", noteRoutes);
+
+// Error handling
+app.use((err, req, res, next) => {
+  console.error("Server error:", err);
+  res.status(500).json({ error: "Internal server error" });
+});
+
+// Only start server locally
 if (process.env.NODE_ENV !== "production") {
   const PORT = process.env.PORT || 8000;
-  app.listen(PORT, () => {
-    console.log(`🚀 Server running on port ${PORT}`);
+  connectDB().then(() => {
+    app.listen(PORT, () => {
+      console.log(`🚀 Server running on port ${PORT}`);
+    });
   });
 }
 
-// Export the app for Vercel
 export default app;
