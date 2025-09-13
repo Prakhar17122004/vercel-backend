@@ -26,3 +26,5 @@ Thumbs.db
 # Optional lockfile (if you want)
 # package-lock.json
 # yarn.lock
+
+backend/.env
