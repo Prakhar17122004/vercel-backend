@@ -13,7 +13,11 @@ const app = express();
 // Middleware
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ limit: "10mb", extended: true }));
-app.use(cors());
+app.use(cors({
+  origin: ["https://vercel-frontend-tan-one.vercel.app/login"], // put your actual frontend domain here
+  methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
+  credentials: true
+}));
 
 // Routes
 app.get("/", (req, res) => {
