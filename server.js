@@ -13,7 +13,17 @@ const app = express();
 // Middleware
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ limit: "10mb", extended: true }));
-app.use(cors());
+
+// ✅ Proper CORS
+const allowedOrigins = [
+  "http://localhost:3000",
+  "https://your-frontend.vercel.app"
+];
+
+app.use(cors({
+  origin: allowedOrigins,
+  credentials: true
+}));
 
 // Routes
 app.get("/", (req, res) => {
@@ -28,12 +38,12 @@ mongoose
   .then(() => {
     console.log("✅ MongoDB connected");
 
-    // 👉 Only start listening locally (not on Vercel)
+    // 👉 Only run locally
     if (process.env.NODE_ENV !== "production") {
       app.listen(8000, () => console.log("🚀 Server running on port 8000"));
     }
   })
   .catch((err) => console.error(err));
 
-// ✅ Export the app for Vercel
+// ✅ Export for Vercel
 export default app;
