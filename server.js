@@ -24,16 +24,14 @@ app.use("/api/notes", noteRoutes);
 
 // MongoDB connection
 mongoose
-  .connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
+  .connect(process.env.MONGO_URI)
   .then(() => {
     console.log("✅ MongoDB connected");
 
-    // 👉 Only start listening locally (not on Vercel)
-    if (process.env.NODE_ENV !== "production") {
-      app.listen(8000, () => console.log("🚀 Server running on port 8000"));
-    }
+    // Start server
+    const PORT = process.env.PORT || 8000;
+    app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
   })
-  .catch((err) => console.error(err));
+  .catch((err) => console.error("❌ MongoDB connection error:", err));
 
-// ✅ Export the app for Vercel
 export default app;
